@@ -1,0 +1,6 @@
+fastapi==0.112.2
+uvicorn==0.30.5
+sqlalchemy==2.0.34
+pydantic==2.8.2
+pydantic-core==2.20.1
+PyJWT==2.8.0

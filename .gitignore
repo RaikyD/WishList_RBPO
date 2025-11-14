@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+.venv/
+.env
+.pytest_cache/
+.coverage
+.db
+# IDE
+.vscode/
+.idea/
+# OS
+.DS_Store
+
+wishlist.db
