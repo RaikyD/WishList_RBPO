@@ -1,0 +1,23 @@
+policy:
+  default:
+    critical: "fail"
+    high: "fail"
+    medium: "warn"
+    low: "ignore"
+
+waivers:
+  - id: "CVE-2024-38526"
+    package: "urllib3"
+    version: "2.2.0"
+    severity: "HIGH"
+    reason: >
+      Уязвимость проявляется только при использовании deprecated-режима proxy tunneling
+      и не затрагивает реальную эксплуатацию Wishlist API. Компонент requests/urllib3
+      применяется только для внутренних запросов в нашем сервисе и не обрабатывает
+      недоверенный пользовательский ввод.
+    mitigation: >
+    # Так как новое репо, то issue све пропали
+    # issue: "https://github.com/RaikyD/WishList_RBPO/issues"
+    created_at: "2025-12-01"
+    review_after: "2026-01-15"
+    approved_by: "security-reviewer"

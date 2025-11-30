@@ -1,0 +1,136 @@
+name: Security P09
+
+on:
+  push:
+    paths:
+      - "requirements*.txt"
+      - "Dockerfile"
+      - "pyproject.toml"
+      - "EVIDENCE/**"
+      - ".github/workflows/security-p09.yml"
+      - "policy/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-p09-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Syft (fixed version)
+        run: |
+          curl -sSfL https://github.com/anchore/syft/releases/download/v1.18.0/syft_1.18.0_linux_amd64.tar.gz \
+            -o syft.tar.gz
+          tar -xzf syft.tar.gz
+          sudo mv syft /usr/local/bin/syft
+
+      - name: Generate SBOM (JSON)
+        run: |
+          mkdir -p EVIDENCE/P09
+          syft . -o json > EVIDENCE/P09/sbom-${GITHUB_SHA}.json
+          # Копия с "каноничным" именем для проверяющих
+          cp EVIDENCE/P09/sbom-${GITHUB_SHA}.json EVIDENCE/P09/sbom.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: EVIDENCE/P09/sbom*.json
+
+  sca:
+    name: SCA on SBOM
+    needs: sbom
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: EVIDENCE/P09
+
+      - name: Install Grype (fixed version)
+        run: |
+          curl -sSfL https://github.com/anchore/grype/releases/download/v0.76.0/grype_0.76.0_linux_amd64.tar.gz \
+            -o grype.tar.gz
+          tar -xzf grype.tar.gz
+          sudo mv grype /usr/local/bin/grype
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run SCA (Grype on SBOM)
+        run: |
+          mkdir -p EVIDENCE/P09
+          grype sbom:EVIDENCE/P09/sbom.json -o json > EVIDENCE/P09/sca_report.json
+
+      - name: Generate SCA summary
+        run: |
+          python << 'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+
+          report_path = Path("EVIDENCE/P09/sca_report.json")
+          data = json.loads(report_path.read_text())
+          matches = data.get("matches", [])
+
+          severities = Counter()
+          example_issues = {}
+
+          for m in matches:
+              vuln = m.get("vulnerability", {})
+              sev = vuln.get("severity", "Unknown")
+              severities[sev] += 1
+              if sev in ("Critical", "High") and sev not in example_issues:
+                  example_issues[sev] = {
+                      "id": vuln.get("id"),
+                      "data_source": vuln.get("dataSource"),
+                      "url": vuln.get("urls", [None])[0],
+                  }
+
+          lines = []
+          lines.append("# SCA Summary\n")
+          lines.append("## Severity counts\n")
+          for sev in sorted(severities.keys()):
+              lines.append(f"- {sev}: {severities[sev]}")
+
+          lines.append("\n## Example Critical/High findings\n")
+          if not example_issues:
+              lines.append("- No Critical/High vulnerabilities found.")
+          else:
+              for sev, info in example_issues.items():
+                  lines.append(f"- **{sev}**: {info['id']} ({info['url']})")
+
+          lines.append("\n## Planned actions\n")
+          lines.append("- [ ] Проверить возможность обновления зависимостей с Critical/High.")
+          lines.append("- [ ] При невозможности обновления — оформить waiver в `policy/waivers.yml` с обоснованием и сроком пересмотра.")
+          lines.append("- [ ] Задокументировать принятые решения в PR/issue.")
+
+          Path("EVIDENCE/P09/sca_summary.md").write_text("\n".join(lines), encoding="utf-8")
+          PY
+
+      - name: Upload SCA artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sca-${{ github.sha }}
+          path: |
+            EVIDENCE/P09/sca_report.json
+            EVIDENCE/P09/sca_summary.md
