@@ -1,0 +1,12 @@
+title = "Wishlist Gitleaks config"
+
+[extend]
+  useDefault = true
+
+[allowlist]
+  description = "Allowlist для ложноположительных срабатываний в Wishlist API"
+
+  paths = [
+    '''EVIDENCE/.*''',
+    '''htmlcov/.*''',
+  ]

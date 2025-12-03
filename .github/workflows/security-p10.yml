@@ -1,0 +1,157 @@
+name: Security P10
+
+on:
+  push:
+    paths:
+      - "app/**"
+      - "security/**"
+      - ".github/workflows/security-p10.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-p10-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep (p/ci + custom rules)
+        run: |
+          mkdir -p EVIDENCE/P10
+          docker run --rm \
+            -v "${PWD}:/src" \
+            -w /src \
+            returntocorp/semgrep:1.86.0 \
+            semgrep \
+              --config "p/ci" \
+              --config "security/semgrep/rules.yml" \
+              --sarif --output EVIDENCE/P10/semgrep.sarif \
+              --error || true
+
+      - name: Upload Semgrep SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-sarif-${{ github.sha }}
+          path: EVIDENCE/P10/semgrep.sarif
+
+  gitleaks:
+    name: Gitleaks secrets scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Gitleaks
+        run: |
+          mkdir -p EVIDENCE/P10
+          docker run --rm \
+            -v "${PWD}:/repo" \
+            zricethezav/gitleaks:v8.18.2 \
+            detect \
+              --source="/repo" \
+              --config="/repo/security/.gitleaks.toml" \
+              --report-format="json" \
+              --report-path="/repo/EVIDENCE/P10/gitleaks.json" || true
+
+      - name: Upload Gitleaks report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-${{ github.sha }}
+          path: EVIDENCE/P10/gitleaks.json
+
+  summarize:
+    name: P10 summary
+    needs: [semgrep, gitleaks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Semgrep artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: semgrep-sarif-${{ github.sha }}
+          path: EVIDENCE/P10
+
+      - name: Download Gitleaks artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gitleaks-${{ github.sha }}
+          path: EVIDENCE/P10
+
+      - name: Build SAST summary
+        run: |
+          mkdir -p EVIDENCE/P10
+          python << 'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+
+          semgrep_path = Path("EVIDENCE/P10/semgrep.sarif")
+          gitleaks_path = Path("EVIDENCE/P10/gitleaks.json")
+          summary_path = Path("EVIDENCE/P10/sast_summary.md")
+
+          lines = ["# P10 SAST & Secrets summary\n"]
+
+          # --- Semgrep ---
+          if semgrep_path.exists():
+              data = json.loads(semgrep_path.read_text(encoding="utf-8"))
+              runs = data.get("runs", [])
+              results = runs[0].get("results", []) if runs else []
+              severities = Counter()
+              for r in results:
+                  rule = r.get("rule", {})
+                  level = rule.get("properties", {}).get("security-severity", None)
+                  if not level:
+                      level = rule.get("defaultConfiguration", {}).get("level", "warning")
+                  severities[level] += 1
+
+              lines.append("## Semgrep\n")
+              if not results:
+                  lines.append("- Issues: 0\n")
+              else:
+                  lines.append("Всего findings: {}\n".format(len(results)))
+                  lines.append("Разбивка по severity:\n")
+                  for sev, cnt in severities.items():
+                      lines.append(f"- {sev}: {cnt}")
+              lines.append("")
+
+          # --- Gitleaks ---
+          lines.append("## Gitleaks\n")
+          if gitleaks_path.exists():
+              gitleaks = json.loads(gitleaks_path.read_text(encoding="utf-8"))
+              findings = gitleaks if isinstance(gitleaks, list) else gitleaks.get("findings", [])
+              lines.append(f"- Найдено потенциальных секретов: {len(findings)}")
+              if not findings:
+                  lines.append("- Реальных секретов нет, ложных срабатываний не найдено.")
+              else:
+                  lines.append("- Требуется ручной триаж findings (см. комментарии в PR).")
+          else:
+              lines.append("- Отчёт gitleaks.json не найден.")
+
+          lines.append("\n## План дальнейших действий\n")
+          lines.append("- Использовать Semgrep и Gitleaks как часть DS-раздела итогового отчёта.")
+          lines.append("- Регулярно просматривать новые findings и фиксить/откладывать через Issue.")
+
+          summary_path.write_text("\n".join(lines), encoding="utf-8")
+          PY
+
+      - name: Upload P10 summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: p10-summary-${{ github.sha }}
+          path: EVIDENCE/P10/sast_summary.md
