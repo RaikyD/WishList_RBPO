@@ -1,0 +1,19 @@
+rules:
+  - id: wishlist-fastapi-debug-enabled
+    message: "Debug mode should not be enabled in production FastAPI app."
+    languages: [python]
+    severity: WARNING
+    patterns:
+      - pattern: |
+          FastAPI(debug=True)
+
+  - id: wishlist-hardcoded-jwt-secret
+    message: "Возможен хардкоженный секрет (JWT/SECRET) — используй env-переменные."
+    languages: [python]
+    severity: ERROR
+    patterns:
+      - pattern: |
+          $VAR = "$SECRET"
+    metavariables:
+      VAR:
+        regex: ".*(SECRET|TOKEN|KEY).*"
