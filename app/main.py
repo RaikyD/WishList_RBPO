@@ -35,6 +35,10 @@ def health(db=Depends(get_db)):
     db.execute(text("SELECT 1"))
     return {"status": "ok"}
 
+@app.get("/healthz", tags=["meta"])
+def healthz():
+    return {"status": "ok"}
+
 
 # Подключаем все HTTP-ручки
 app.include_router(api)
