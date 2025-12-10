@@ -40,6 +40,7 @@ def health(db=Depends(get_db)):
 def healthz():
     return {"status": "ok"}
 
+
 # Подключаем все HTTP-ручки
 app.include_router(api)
 
