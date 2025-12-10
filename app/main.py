@@ -40,6 +40,14 @@ def health(db=Depends(get_db)):
 def healthz():
     return {"status": "ok"}
 
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("Cache-Control", "no-store")
+    response.headers.setdefault("Pragma", "no-cache")
+    response.headers.setdefault("Expires", "0")
+    return response
+
 
 # Подключаем все HTTP-ручки
 app.include_router(api)
