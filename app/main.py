@@ -36,6 +36,11 @@ def health(db=Depends(get_db)):
     return {"status": "ok"}
 
 
+@app.get("/healthz", tags=["meta"])
+def healthz():
+    return {"status": "ok"}
+
+
 # Подключаем все HTTP-ручки
 app.include_router(api)
 
