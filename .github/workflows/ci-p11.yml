@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [ main ]
-    paths:
-      - "app/**"
-      - ".github/workflows/ci-p11.yml"
-      - "EVIDENCE/P11/**"
+    #paths:
+    #  - "app/**"
+    #  - ".github/workflows/ci-p11.yml"
+    #  - "EVIDENCE/P11/**"
 
 permissions:
   contents: read
