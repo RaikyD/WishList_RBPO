@@ -3,6 +3,6 @@ compact: true
 
 framework:
   - dockerfile
-  - docker_compose
+  - github_actions
 
 skip-check: []

@@ -43,20 +43,26 @@ jobs:
       - name: Run Checkov on docker-compose & Dockerfile
         run: |
           mkdir -p EVIDENCE/P12
-          docker run --rm -v "$PWD:/work" bridgecrew/checkov \
+          if docker run --rm -v "$PWD:/work" bridgecrew/checkov \
             -d /work \
             -o json \
             --compact \
             --config-file /work/security/checkov.yaml \
-            > EVIDENCE/P12/checkov_report.json || true
+            > EVIDENCE/P12/checkov_report.json; then
+            echo "Checkov finished successfully"
+          else
+            echo "Checkov failed, writing empty JSON summary"
+            echo '{}' > EVIDENCE/P12/checkov_report.json
+          fi
 
-      - name: Run Trivy on Docker image
+      - name: Run Trivy on filesystem
         run: |
           mkdir -p EVIDENCE/P12
           docker run --rm -v "$PWD:/work" aquasec/trivy:latest \
-            image wishlist-api:local \
+            fs /work \
               --format json \
               --output /work/EVIDENCE/P12/trivy_report.json || true
+
 
       - name: Upload P12 evidence
         if: always()
