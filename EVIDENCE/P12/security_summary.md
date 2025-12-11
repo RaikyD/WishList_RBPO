@@ -101,25 +101,24 @@ Wishlist API в рамках задания P12.
 
 ## 4. Краткое соответствие критериям P12
 
-- **C1 — Dockerfile / container scan (Hadolint)**  
-  - Настроен запуск Hadolint в CI.  
-  - Dockerfile собственного сервиса проверяется, отчёт `hadolint_report.json` сохранён.  
+- **C1 — Dockerfile / container scan (Hadolint)**
+  - Настроен запуск Hadolint в CI.
+  - Dockerfile собственного сервиса проверяется, отчёт `hadolint_report.json` сохранён.
   - Нарушений не найдено.
 
-- **C2 — IaC scan (Checkov)**  
-  - Checkov анализирует Dockerfile и GitHub Actions workflows.  
-  - Все проверки прошли успешно (`failed = 0`).  
+- **C2 — IaC scan (Checkov)**
+  - Checkov анализирует Dockerfile и GitHub Actions workflows.
+  - Все проверки прошли успешно (`failed = 0`).
   - Отчёт `checkov_report.json` сохранён в `EVIDENCE/P12/`.
 
-- **C3 — Vulnerability scan (Trivy)**  
-  - Trivy сканирует репозиторий и Python-зависимости.  
-  - Уязвимости в зависимостях на момент проверки не обнаружены.  
+- **C3 — Vulnerability scan (Trivy)**
+  - Trivy сканирует репозиторий и Python-зависимости.
+  - Уязвимости в зависимостях на момент проверки не обнаружены.
   - Отчёт `trivy_report.json` приложен.
 
-- **C4 — Hardening контейнера и окружения**  
+- **C4 — Hardening контейнера и окружения**
   - Реализован hardening через настройки в `docker-compose.yml`: `read_only`, `tmpfs`, `no-new-privileges`, `cap_drop: ALL`, выделенный volume.
 
-- **C5 — Интеграция в CI / evidence**  
-  - Все сканеры интегрированы в отдельный workflow `ci-p12-iac-container.yml`.  
+- **C5 — Интеграция в CI / evidence**
+  - Все сканеры интегрированы в отдельный workflow `ci-p12-iac-container.yml`.
   - Артефакты сканирования автоматически загружаются в GitHub Actions и сохраняются в `EVIDENCE/P12/`.
-
