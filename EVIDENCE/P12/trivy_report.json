@@ -1,0 +1,109 @@
+{
+  "SchemaVersion": 2,
+  "ReportID": "019b0edc-278c-7752-ac06-7173990ff0e4",
+  "CreatedAt": "2025-12-11T19:21:07.724480986Z",
+  "ArtifactID": "sha256:3dabb50e2b9b51743be39b18486c0cbec95d59611dd6086c20e70752f97ee986",
+  "ArtifactName": "/work",
+  "ArtifactType": "repository",
+  "Metadata": {
+    "RepoURL": "https://github.com/RaikyD/WishList_RBPO",
+    "Branch": "p12-iac-container",
+    "Commit": "e55aa0a5214ab5c9e7805069036a067b7e3dd64c",
+    "CommitMsg": "P12: fix Checkov frameworks and use Trivy fs scan",
+    "Author": "Gurshumov Daniil Bakhtiyarovich \u003cdaniil.gurshumov@yandex.ru\u003e",
+    "Committer": "Gurshumov Daniil Bakhtiyarovich \u003cdaniil.gurshumov@yandex.ru\u003e"
+  },
+  "Results": [
+    {
+      "Target": "requirements.txt",
+      "Class": "lang-pkgs",
+      "Type": "pip",
+      "Packages": [
+        {
+          "Name": "PyJWT",
+          "Identifier": {
+            "PURL": "pkg:pypi/pyjwt@2.8.0",
+            "UID": "4cd254d227e91844"
+          },
+          "Version": "2.8.0",
+          "Locations": [
+            {
+              "StartLine": 6,
+              "EndLine": 6
+            }
+          ]
+        },
+        {
+          "Name": "fastapi",
+          "Identifier": {
+            "PURL": "pkg:pypi/fastapi@0.112.2",
+            "UID": "903ca4fc39714d23"
+          },
+          "Version": "0.112.2",
+          "Locations": [
+            {
+              "StartLine": 1,
+              "EndLine": 1
+            }
+          ]
+        },
+        {
+          "Name": "pydantic",
+          "Identifier": {
+            "PURL": "pkg:pypi/pydantic@2.8.2",
+            "UID": "31526864998ca91b"
+          },
+          "Version": "2.8.2",
+          "Locations": [
+            {
+              "StartLine": 4,
+              "EndLine": 4
+            }
+          ]
+        },
+        {
+          "Name": "pydantic-core",
+          "Identifier": {
+            "PURL": "pkg:pypi/pydantic-core@2.20.1",
+            "UID": "3c81c717c6b03494"
+          },
+          "Version": "2.20.1",
+          "Locations": [
+            {
+              "StartLine": 5,
+              "EndLine": 5
+            }
+          ]
+        },
+        {
+          "Name": "sqlalchemy",
+          "Identifier": {
+            "PURL": "pkg:pypi/sqlalchemy@2.0.34",
+            "UID": "7539e88782cdc31d"
+          },
+          "Version": "2.0.34",
+          "Locations": [
+            {
+              "StartLine": 3,
+              "EndLine": 3
+            }
+          ]
+        },
+        {
+          "Name": "uvicorn",
+          "Identifier": {
+            "PURL": "pkg:pypi/uvicorn@0.30.5",
+            "UID": "7c6c810caf4136d2"
+          },
+          "Version": "0.30.5",
+          "Locations": [
+            {
+              "StartLine": 2,
+              "EndLine": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
