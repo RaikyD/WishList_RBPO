@@ -1,0 +1,8 @@
+quiet: false
+compact: true
+
+framework:
+  - dockerfile
+  - github_actions
+
+skip-check: []
